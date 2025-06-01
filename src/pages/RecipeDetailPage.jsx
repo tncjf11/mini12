@@ -3,11 +3,22 @@ import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
+
 const RecipeDetailPage = () => {
     const { id } = useParams();
+    const [firebaseRecipe, setFirebaseRecipe] = useState(null);  // 🔹 Firebase에서 가져온 데이터 저장용
 
+    useEffect(() => {
+  const fetchData = async () => {
+    const data = await recipeService.getRecipeById(id);
+    if (data) {
+      setFirebaseRecipe(data);
+    }
+  };
+  fetchData();
+}, [id]);
     // 샘플 데이터
-    const recipe = {
+    const fallbackRecipe = {
         id,
         title: '토마토 미트볼 파스타',
         time: '10min',
@@ -33,27 +44,40 @@ const RecipeDetailPage = () => {
             { id: 2, author: '사용자2', text: '아 군침도네용..' },
             { id: 3, author: '사용자3', text: '오늘 저녁으로 해봐야겠어요' },
             { id: 4, author: '사용자4', text: '레시피 완전 최고!' }
-        ]
+        ],
+        imageUrl: null
     };
+
+    const recipe = firebaseRecipe || fallbackRecipe; // 🔹 Firebase 데이터가 없으면 샘플 데이터 사용
 
     return (
         <div className="app-container">
             <Header />
 
             {/* 레시피 이미지 */}
-            <div style={{ height: '234px', backgroundColor: '#D9D9D9', position: 'relative' }}>
-                <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    color: 'white',
-                    fontWeight: '700',
-                    fontSize: '32px'
-                }}>
-                    PHOTO
-                </div>
-            </div>
+            <div style={{ height: '234px', position: 'relative', backgroundColor: '#D9D9D9' }}>
+                {Recipe.imageUrl ? (
+                    <img
+                        src={Recipe.imageUrl}
+      alt="레시피 이미지"
+      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+    />
+  ) : (
+    <div
+      style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        color: 'white',
+        fontWeight: '700',
+        fontSize: '20px'
+      }}
+    >
+      이미지 준비 중입니다
+    </div>
+  )}
+</div>
 
             {/* 레시피 정보 */}
             <div style={{ padding: '20px 15px' }}>

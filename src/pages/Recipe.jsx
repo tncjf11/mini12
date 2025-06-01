@@ -17,6 +17,7 @@ const Recipe = () => {
     const { id } = useParams();
     const { currentUser } = useAuth();
     const [recipe, setRecipe] = useState(null);
+    const [firebaseRecipe, setFirebaseRecipe] = useState(null);
     const [isBookmarked, setIsBookmarked] = useState(false);
     const [isLiked, setIsLiked] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -253,6 +254,22 @@ const Recipe = () => {
             unsubscribeComments();
         };
     }, [id, currentUser]);
+
+    useEffect(() => {
+   const fetchFirebaseRecipe = async () => {
+    try {
+      const data = await recipeService.getRecipeById(id);
+      if (data) {
+        setFirebaseRecipe(data);
+      }
+    } catch (err) {
+      console.error('Firebase 레시피 불러오기 실패:', err);
+    }
+  };
+
+  fetchFirebaseRecipe();
+}, [id]);
+
 
     // 💖 찜 토글 함수
     const toggleBookmark = async () => {

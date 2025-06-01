@@ -19,10 +19,10 @@ const getApiBaseUrl = () => {
         // return 'https://abc123.ngrok.io/api';  // ← ngrok URL로 변경
 
         // 🏠 같은 네트워크 내 다른 컴퓨터인 경우
-        // return 'http://192.168.1.100:8081/api';  // ← 팀원 IP로 변경
+         return 'http://192.168.166.161:8081/api';  // ← 팀원 IP로 변경
 
         // 💻 같은 컴퓨터인 경우 (기본값)
-        return 'http://localhost:8081/api';
+        // return 'http://192.168.166.161:8081/api';
 
         // 📝 백엔드 팀에게 확인하세요:
         // 1. Railway 배포 완료? → Railway URL 요청 (가장 추천!)
@@ -33,7 +33,7 @@ const getApiBaseUrl = () => {
     } else {
         // 운영 환경 - 실제 배포된 백엔드 서버 URL
         return process.env.REACT_APP_API_URL || 'https://your-backend-domain.com/api';
-    }
+     }
 };
 
 /**

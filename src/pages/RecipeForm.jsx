@@ -8,7 +8,7 @@ import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
 // 새로 생성한 컴포넌트와 서비스 import
 import ImageUpload from '../components/ImageUpload';
-import { createRecipe } from '../services/apiService';
+import { saveRecipeToFirestore } from '../utils/firebaseUtils';
 
 const RecipeForm = () => {
     const navigate = useNavigate();
@@ -188,11 +188,30 @@ const RecipeForm = () => {
             });
 
             // API 서비스를 통해 레시피 등록 (이미지 파일과 함께)
-            const result = await createRecipe(formData, selectedImage);
+            //const result = await createRecipe(formData, selectedImage);//
 
-            console.log('✅ 레시피 등록 성공:', result);
+            console.log('🚀 이미지 업로드 시작');
+
+            let imageUrl = null;
+            if (selectedImage) {
+                 imageUrl = await uploadImageToFirebase(selectedImage);  // Firebase Storage에 업로드
+                 console.log('✅ 이미지 업로드 완료:', imageUrl);
+             }
+
+             const newRecipeId = await saveRecipeToFirestore({
+                  ...formData,
+                  imageUrl,
+                  userId: currentUser.uid,
+                  createdAt: new Date()
+            });
+
+            console.log('✅ 레시피 저장 완료! ID:', newRecipeId);
+
+            // 성공 메시지 표시
             alert('레시피가 성공적으로 등록되었습니다! 🎉');
-            navigate('/mypage');
+
+            // 상세 페이지로 이동
+            navigate(`/detail/${newRecipeId}`);
 
         } catch (error) {
             console.error('❌ 레시피 등록 오류:', error);
@@ -203,15 +222,15 @@ const RecipeForm = () => {
             });
 
             // 에러 메시지 처리 개선
-            let errorMessage = '레시피 등록에 실패했습니다.';
+            let errorMessage = '레시피 등록에 실패했습니다.'; 
 
             if (error.message.includes('Failed to fetch') || error.message.includes('fetch')) {
                 errorMessage = `🌐 서버 연결 실패: 백엔드 서버가 실행 중인지 확인해주세요.\n
-현재 접속 시도 중인 서버: http://localhost:8081/api
-\n해결 방법:
-1. 백엔드 팀에게 서버 실행 상태 확인 요청
-2. 서버 포트가 8081이 맞는지 확인
-3. 방화벽이나 보안 프로그램 확인`;
+                현재 접속 시도 중인 서버: http://localhost:8081/api
+                \n해결 방법:
+                1. 백엔드 팀에게 서버 실행 상태 확인 요청
+                2. 서버 포트가 8081이 맞는지 확인
+                3. 방화벽이나 보안 프로그램 확인`;
             } else if (error.message.includes('사용자 인증')) {
                 errorMessage = '로그인이 필요합니다. 다시 로그인해주세요.';
                 navigate('/login');
@@ -219,9 +238,9 @@ const RecipeForm = () => {
                 errorMessage = `서버 오류가 발생했습니다.\n\n상세 정보: ${error.message}\n\n백엔드 팀에게 이 오류를 전달해주세요.`;
             } else if (error.message.includes('network') || error.message.includes('ERR_')) {
                 errorMessage = `네트워크 오류가 발생했습니다.\n\n가능한 원인:
-1. 인터넷 연결 상태 확인
-2. 백엔드 서버 실행 상태 확인
-3. CORS 설정 문제 (백엔드 팀 확인 필요)`;
+                 1. 인터넷 연결 상태 확인
+                 2. 백엔드 서버 실행 상태 확인
+                 3. CORS 설정 문제 (백엔드 팀 확인 필요)`;
             } else if (error.message.includes('AbortError') || error.message.includes('timeout')) {
                 errorMessage = '서버 응답 시간이 초과되었습니다. 백엔드 서버가 실행 중인지 확인해주세요.';
             } else {

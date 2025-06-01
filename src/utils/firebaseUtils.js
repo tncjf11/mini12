@@ -16,9 +16,10 @@ import {
     serverTimestamp,
     onSnapshot,
     startAfter,
-    limit
+    limit as limitFn
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'; 
 
 // 🎯 좋아요 관련 함수들
 export const likeService = {
@@ -184,6 +185,10 @@ export const favoriteService = {
             console.error('찜 목록 가져오기 오류:', error);
             return [];
         }
+    },
+
+    isFavorited(recipeId, userId) {
+        return this.checkIfBookmarked(recipeId, userId);
     }
 };
 
@@ -285,7 +290,7 @@ export const commentService = {
 
             if (commentDoc.exists()) {
                 const likedBy = commentDoc.data().likedBy || [];
-                const isLiked = likedBy.includes(userId);
+                const isLiked = await favoriteService.checkIfBookmarked(recipeId, userId);
 
                 if (isLiked) {
                     // 좋아요 취소
@@ -376,6 +381,15 @@ export const recipeStatsService = {
     }
 };
 
+// 📸 이미지 업로드 유틸리티
+export const uploadImageToFirebase = async (imageFile) => {
+    const storage = getStorage();
+    const imageRef = ref(storage, `recipes/${Date.now()}_${imageFile.name}`);
+    await uploadBytes(imageRef, imageFile);
+    const downloadUrl = await getDownloadURL(imageRef);
+    return downloadUrl;
+};
+
 // 🔄 배치 작업 유틸리티
 export const batchService = {
     // 사용자 데이터 일괄 삭제 (계정 삭제 시)
@@ -410,6 +424,19 @@ export const batchService = {
     }
 };
 
+
+export const saveRecipeToFirestore = async (recipeData) => {
+  const docRef = await addDoc(collection(db, 'recipes'), {
+    ...recipeData,
+    isPublic: true, // ✅ 공개 여부 기본값
+    createdAt: serverTimestamp(),
+    likesCount: 0,
+    commentsCount: 0,
+    authorId: recipeData.userId // ✅ 나중에 MyPage에서 필터에 사용됨
+  });
+  return docRef.id;
+};
+
 // 📖 레시피 관련 함수들 (Firebase 전용)
 export const recipeService = {
     // 모든 레시피 가져오기
@@ -419,7 +446,7 @@ export const recipeService = {
                 collection(db, 'recipes'),
                 where('isPublic', '==', true),
                 orderBy('createdAt', 'desc'),
-                limit(limit)
+                limitFn(limit)
             );
 
             const snapshot = await getDocs(q);
@@ -470,7 +497,7 @@ export const recipeService = {
                 collection(db, 'recipes'),
                 where('authorId', '==', userId),
                 orderBy('createdAt', 'desc'),
-                limit(limit)
+                limitFn(limit)
             );
 
             const snapshot = await getDocs(q);
@@ -496,7 +523,7 @@ export const recipeService = {
                 collection(db, 'recipes'),
                 where('isPublic', '==', true),
                 orderBy('createdAt', 'desc'),
-                limit(limit)
+                limitFn(limit)
             );
 
             if (category && category !== 'ALL') {
@@ -505,7 +532,7 @@ export const recipeService = {
                     where('isPublic', '==', true),
                     where('category', '==', category),
                     orderBy('createdAt', 'desc'),
-                    limit(limit)
+                    limitFn(limit)
                 );
             }
 
@@ -551,7 +578,7 @@ export const recipeService = {
                 collection(db, 'recipes'),
                 where('isPublic', '==', true),
                 orderBy('createdAt', 'desc'),
-                limit(limit)
+                limitFn(limit)
             );
 
             const snapshot = await getDocs(q);

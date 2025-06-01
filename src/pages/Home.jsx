@@ -123,7 +123,6 @@ const Home = () => {
                     <input
                         type="text"
                         placeholder="오늘은 어떤 요리를 할까요?"
-                        onClick={() => navigate('/search')}
                         readOnly
                     />
                 </div>
